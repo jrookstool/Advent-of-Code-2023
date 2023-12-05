@@ -1,4 +1,5 @@
-wordsToNumbers = {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9}
+import re
+wordsToNumbers = {'one': '1', 'two': '2', 'three': '3', 'four': '4', 'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9'}
 
 def sumCalibrations(filename):
     file = open(filename, 'r')
@@ -6,6 +7,7 @@ def sumCalibrations(filename):
     currentLine = file.readline()
     while(currentLine != ''):
         sum += int(getCalibrationNumber(currentLine))
+        print(currentLine[:len(currentLine) - 1] + ' = ' + getCalibrationNumber(currentLine) + ' (sum = ' + str(sum) + ')')
         currentLine = file.readline()
     return sum
 
@@ -15,103 +17,101 @@ def getCalibrationNumber(string):
     secondIndex = len(string) - 2
     secondNum = string[secondIndex]
 
-    # Find the first digit number and the first word number
+    # Find the numbers using helper function that uses regex
 
-    firstDigit = findDigit(string)
-    firstWord = findFirstWordNumber(string)
+    digitInstances = findDigits(string)
+    wordInstances = findWords(string)
 
-    # Decide which came first
+    if (digitInstances == None and wordInstances == None):
+        return 0
+    elif (digitInstances == None):
+        firstWord = wordInstances[0][1]
+        lastWord = wordInstances[1][1]
+        firstNum = wordsToNumbers[firstWord]
+        secondNum = wordsToNumbers[lastWord]
+    elif (wordInstances == None):
+        firstNum = digitInstances[0][1]
+        secondNum = digitInstances[1][1]
+    else:
+        firstDigitInfo = digitInstances[0]
+        lastDigitInfo = digitInstances[-1]
+        firstWordInfo = wordInstances[0]
+        lastWordInfo = wordInstances[-1]
 
-    if (firstDigit[1] < firstWord[1]):
-        firstNum = firstDigit[0]
+        if (firstDigitInfo[0] < firstWordInfo[0]):
+            firstNum = firstDigitInfo[1]
+        else:
+            firstNum = wordsToNumbers[firstWordInfo[1]]
+        
+        if (lastDigitInfo[0] > lastWordInfo[0]):
+            secondNum = lastDigitInfo[1]
+        else:
+            secondNum = wordsToNumbers[lastWordInfo[1]]
     
-    # Find the second digit number and the second word number
-
-    lastDigit = findDigit(string[::-1])
-    lastWord = findLastWordNumber(string)
-
-    # Decide which came last
-
-    if (len(string) - lastDigit[1] > lastWord[1]):
-        secondNum = lastDigit[0]
-    
-    
-    # firstNum = setNumber(string, firstNum, firstIndex)
-
-    # while (not isInt(secondNum) and parseWord(string, secondIndex)[0] not in wordsToNumbers):
-    #     secondIndex -= 1
-    #     secondNum = string[secondIndex]
-    
-    # secondNum = setNumber(string, secondNum, secondIndex)
-
     return firstNum + secondNum
 
-def isInt(string):
-    try:
-        int(string)
-        return True
-    except ValueError:
-        return False
+def findDigits(string):
+    firstIndex = 0
+    firstNum = ''
+    secondIndex = len(string) - 1
+    secondNum = ''
 
-def findDigit(string):
-    startIndex = 0
-    endIndex = 1
     for i in range(len(string)):
-        if (isInt(string[i])):
-            startIndex = i
+        if (string[i].isdigit()):
+            firstIndex = i
+            firstNum = string[firstIndex]
             break
-    while (isInt(string[startIndex:endIndex])):
-        endIndex += 1
-    return string[startIndex:endIndex-1], startIndex
-
-def findFirstWordNumber(string):
-    startIndex = 0
-    if (isInt(string[0])):
-        startIndex += 1
-    endIndex = 0
-    while (string[startIndex:endIndex] not in wordsToNumbers):
-        if (isInt(string[endIndex])):
-            startIndex = endIndex + 1
-        print(string[startIndex:endIndex])
-        endIndex += 1
-    return string[startIndex:endIndex], startIndex
-
-def findLastWordNumber(string):
-    startIndex = -1
+    
     for i in range(len(string) - 1, -1, -1):
-        for j in range(i, len(string)):
-            if (string[i:j] in wordsToNumbers):
-                startIndex = i
-                endIndex = j
-                break
-        if (startIndex != -1):
+        if (string[i].isdigit()):
+            secondIndex = i
+            secondNum = string[secondIndex]
             break
-    return string[startIndex:endIndex], startIndex
 
-def parseWord(string, startIndex):
-    endIndex = startIndex + 1
-    while (string[startIndex:endIndex] not in wordsToNumbers and endIndex < len(string)):
-        endIndex += 1
-    if (string[startIndex:endIndex] not in wordsToNumbers):
-        return '', endIndex
-    return string[startIndex:endIndex], endIndex
+    if (firstNum == '' and secondNum == ''):
+        return None
+    
+    return (firstIndex, firstNum), (secondIndex, secondNum)
 
-def setNumber(string, number, index):
-    if (isInt(number)):
-        number = int(number)
+def findWords(string):
+    # Let's do this by iterating through the string:
+    firstIndex = 0
+    firstWord = ''
+    lastIndex = len(string) - 1
+    lastWord = ''
+
+
+    finished = False
+    for i in range(len(string)):
+        if (not finished):
+            for j in range(i + 1, len(string) + 1):
+                if string[i:j] in wordsToNumbers:
+                    firstIndex = i
+                    firstWord = string[i:j]
+                    finished = True
+                    break
+        else:
+            break
+
+    finished = False
     
-    if (parseWord(string, index)[0] in wordsToNumbers):
-        number = wordsToNumbers[parseWord(string, index)[0]]
+    for i in range(len(string), 0, -1):
+        if (not finished):
+            for j in range(i - 1, -1, -1):
+                if string[j:i] in wordsToNumbers:
+                    lastIndex = j
+                    lastWord = string[j:i]
+                    finished = True
+                    break
+        else:
+            break
     
-    return number
+    if (firstWord == '' and lastWord == ''):
+        return None
+
+    return (firstIndex, firstWord), (lastIndex, lastWord)
 
 def main():
     print(sumCalibrations('day1_input.txt'))
-
-    # print(findDigit('9sixsevenz3'))
-    # print(findFirstWordNumber('9sixsevenz3'))
-    # print(findDigit('9sixsevenz3'[::-1]))
-    # print(findLastWordNumber('9sixsevenz3'))
-
 if __name__ == '__main__':
     main()
