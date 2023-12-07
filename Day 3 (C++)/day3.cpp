@@ -6,6 +6,13 @@ using namespace std;
 #include <vector>
 #include <array>
 
+#define print(x) cout << x << endl;
+
+int processFile(string filename);
+int findSum(string beforeLine, string currentLine, string afterLine);
+bool isSpecialCharacter(char c);
+
+
 bool isSpecialCharacter(char c) {
     return (!isdigit(c)) && (c != '.');
 }
@@ -24,7 +31,19 @@ int processFile(string filename) {
         file.close();
     }
     else cout << "Unable to open file";
-    return 0;
+
+    for (int i = 0; i < lines.size(); i++) {
+        if (i == 0) {
+            sum += findSum("", lines[i], lines[i + 1]);
+        }
+        else if (i == lines.size() - 1) {
+            sum += findSum(lines[i - 1], lines[i], "");
+        }
+        else {
+            sum += findSum(lines[i - 1], lines[i], lines[i + 1]);
+        }
+    }
+    return sum;
 }
 
 int findSum(string beforeLine, string currentLine, string afterLine) {
@@ -55,6 +74,14 @@ int findSum(string beforeLine, string currentLine, string afterLine) {
                         i = j;
                         break;
                     }
+                    if (j == currentLine.length() - 1) {
+                        endIndex = j + 1;
+                        indices.push_back({ startIndex, endIndex });
+                        numbers.push_back(stoi(currentLine.substr(startIndex, endIndex - startIndex)));
+                        finished = true;
+                        i = j;
+                        break;
+                    }
                 }
             }
             finished = false;
@@ -65,6 +92,8 @@ int findSum(string beforeLine, string currentLine, string afterLine) {
         cout << "[" << number << "] ";
     }
     cout << endl;
+
+    finished = false;
 
     // Now that we have all numbers, we need to find the ones that are adjacent to special characters.
 
@@ -85,10 +114,11 @@ int findSum(string beforeLine, string currentLine, string afterLine) {
                 if (isSpecialCharacter(beforeLine[j])) {
                     cout << "Found a special character above " << numbers[i] << endl;
                     sum += numbers[i];
+                    finished = true;
                     break;
                 }
             }
-            continue;
+            if (finished) {finished = false; continue;}
 
             if (isSpecialCharacter(beforeLine[indices[i][0] - 1])) {
                 cout << "Found a special character top left of " << numbers[i] << endl;
@@ -103,14 +133,16 @@ int findSum(string beforeLine, string currentLine, string afterLine) {
             }
         }
         if (afterLine != "") {
-            for (int j = indices[i][0]; j < indices[i][1]; j++) {
-                if (isSpecialCharacter(afterLine[j])) {
+            finished = false;
+            for (int k = indices[i][0]; k < indices[i][1]; k++) {
+                if (isSpecialCharacter(afterLine[k])) {
                     cout << "Found a special character below " << numbers[i] << endl;
                     sum += numbers[i];
+                    finished = true;
+                    break;
                 }
-                break;
             }
-            continue;
+            if (finished) {finished = false; continue;}
 
             if (isSpecialCharacter(afterLine[indices[i][0] - 1])) {
                 cout << "Found a special character bottom left of " << numbers[i] << endl;
@@ -123,15 +155,6 @@ int findSum(string beforeLine, string currentLine, string afterLine) {
                 sum += numbers[i];
                 continue;
             }
-            if (isSpecialCharacter(beforeLine[indices[i][0]])) {
-                cout << "Found a special character above " << numbers[i] << endl;
-                sum += numbers[i];
-                continue;
-            }
-            if (isSpecialCharacter(beforeLine[indices[i][1]])) {
-                cout << "Found a special character above " << numbers[i] << endl;
-                sum += numbers[i];
-            }
         }
     }
 
@@ -140,11 +163,13 @@ int findSum(string beforeLine, string currentLine, string afterLine) {
 
 
 int main() {
-    string line;
-    ifstream myfile("day3_input.txt");
+    // tried 413539, too low
+    // tried 477459, too low
+    // tried 489961, too low
+    // tried 527354, incorrect
+    // tried 529504, incorrect
 
-    //cout << findSum("", ".....487.599...........411...........................................574..679.136..........................30......255.......432............", "") << endl;
-    cout << findSum("....*......*............*..........&586..........................375...@..*....../.....835.............610*........./...............582.....",
-                    "...833........304...&.862...............203..........922.125...............819.............@....563.....................722..775............",
-                    "..............+...994..........#.........*..244.457.....*...........867.........829.....469.....#...........................*...............") << endl;
+    cout << processFile("day3_input.txt") << endl;
+
+    // cout << findSum("", ".611*121", "") << endl;
 }
