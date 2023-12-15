@@ -11,6 +11,7 @@ using namespace std;
 int processFile(string filename);
 int findSum(string beforeLine, string currentLine, string afterLine);
 bool isSpecialCharacter(char c);
+int findSumOfRatios(string beforeLine, string currentLine, string afterLine);
 
 
 bool isSpecialCharacter(char c) {
@@ -26,6 +27,7 @@ int processFile(string filename) {
     int sum = 0;
     if (file.is_open()) {
         while (getline(file, line)) {
+            printf("Read line: %s\n", line.c_str());
             lines.push_back(line);
         }
         file.close();
@@ -33,6 +35,7 @@ int processFile(string filename) {
     else cout << "Unable to open file";
 
     for (int i = 0; i < lines.size(); i++) {
+        printf("Processing line %d: ", i + 1);
         if (i == 0) {
             sum += findSum("", lines[i], lines[i + 1]);
         }
@@ -98,12 +101,13 @@ int findSum(string beforeLine, string currentLine, string afterLine) {
     // Now that we have all numbers, we need to find the ones that are adjacent to special characters.
 
     for (int i = 0; i < numbers.size(); i++) {
-        if (isSpecialCharacter(currentLine[indices[i][0] - 1])) {
+        if (isSpecialCharacter(currentLine[indices[i][0] - 1]) && indices[i][0] > 0) {
             cout << "Found a special character to the left of " << numbers[i] << endl;
             sum += numbers[i];
             continue;
         }
-        if (isSpecialCharacter(currentLine[indices[i][1]])) {
+        if (isSpecialCharacter(currentLine[indices[i][1]]) && indices[i][1] < currentLine.length() - 1) {
+            cout << "SPECIAL CHARACTER: " << currentLine[indices[i][1]] << endl;
             cout << "Found a special character to the right of " << numbers[i] << endl;
             sum += numbers[i];
             continue;
@@ -120,13 +124,13 @@ int findSum(string beforeLine, string currentLine, string afterLine) {
             }
             if (finished) {finished = false; continue;}
 
-            if (isSpecialCharacter(beforeLine[indices[i][0] - 1])) {
+            if (isSpecialCharacter(beforeLine[indices[i][0] - 1]) && indices[i][0] > 0) {
                 cout << "Found a special character top left of " << numbers[i] << endl;
                 sum += numbers[i];
                 continue;
             }
 
-            if (isSpecialCharacter(beforeLine[indices[i][1]])) {
+            if (isSpecialCharacter(beforeLine[indices[i][1]]) && indices[i][1] < beforeLine.length() - 1) {
                 cout << "Found a special character top right of " << numbers[i] << endl;
                 sum += numbers[i];
                 continue;
@@ -144,13 +148,13 @@ int findSum(string beforeLine, string currentLine, string afterLine) {
             }
             if (finished) {finished = false; continue;}
 
-            if (isSpecialCharacter(afterLine[indices[i][0] - 1])) {
+            if (isSpecialCharacter(afterLine[indices[i][0] - 1]) && indices[i][0] > 0) {
                 cout << "Found a special character bottom left of " << numbers[i] << endl;
                 sum += numbers[i];
                 continue;
             }
 
-            if (isSpecialCharacter(afterLine[indices[i][1]])) {
+            if (isSpecialCharacter(afterLine[indices[i][1]]) && indices[i][1] < afterLine.length() - 1) {
                 cout << "Found a special character bottom right of " << numbers[i] << endl;
                 sum += numbers[i];
                 continue;
@@ -159,6 +163,46 @@ int findSum(string beforeLine, string currentLine, string afterLine) {
     }
 
     return sum;
+}
+
+int findSumOfRatios(string beforeLine, string currentLine, string afterLine) {
+    int startIndex = 0;
+    int endIndex = currentLine.length();
+
+    int sum = 0;
+
+    vector<array<int, 2>> indices;
+    vector<int> numbers;
+    bool finished = false;
+
+    for (int i = 0; i < currentLine.length(); i++) {
+        if (isdigit(currentLine[i])) {
+            startIndex = i;
+            if (!finished) {
+                for (int j = i + 1; j < currentLine.length(); j++) {
+                    if (!isdigit(currentLine[j])) {
+                        endIndex = j;
+                        indices.push_back({ startIndex, endIndex });
+                        numbers.push_back(stoi(currentLine.substr(startIndex, endIndex - startIndex)));
+                        finished = true;
+                        i = j;
+                        break;
+                    }
+                    if (j == currentLine.length() - 1) {
+                        endIndex = j + 1;
+                        indices.push_back({ startIndex, endIndex });
+                        numbers.push_back(stoi(currentLine.substr(startIndex, endIndex - startIndex)));
+                        finished = true;
+                        i = j;
+                        break;
+                    }
+                }
+            }
+            finished = false;
+        }
+    }
+
+    
 }
 
 
@@ -171,5 +215,8 @@ int main() {
 
     cout << processFile("day3_input.txt") << endl;
 
-    // cout << findSum("", ".611*121", "") << endl;
+    //cout << findSum("*.........", "..611..211", ".........*") << endl;
+    //*........
+    //..611..211
+    //.........*
 }
