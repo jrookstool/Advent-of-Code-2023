@@ -8,6 +8,11 @@ using namespace std;
 
 #define print(x) cout << x << endl;
 
+struct Number {
+    int value;
+    array<int, 2> indices;
+};
+
 int processFile(string filename);
 int findSum(string beforeLine, string currentLine, string afterLine);
 bool isSpecialCharacter(char c);
@@ -202,7 +207,44 @@ int findSumOfRatios(string beforeLine, string currentLine, string afterLine) {
         }
     }
 
-    
+}
+
+vector<Number> findNumbers(string line) {
+    int startIndex = 0;
+    int endIndex = line.length();
+
+    vector<Number> numbers;
+
+    bool finished = false;
+
+    for (int i = 0; i < line.length(); i++) {
+        if (isdigit(line[i])) {
+            startIndex = i;
+            if (!finished) {
+                for (int j = i + 1; j < line.length(); j++) {
+                    if (!isdigit(line[j])) {
+                        endIndex = j;
+                        indices.push_back({ startIndex, endIndex });
+                        numbers.push_back({stoi(line.substr(startIndex, endIndex - startIndex)), { startIndex, endIndex }});
+                        finished = true;
+                        i = j;
+                        break;
+                    }
+                    if (j == line.length() - 1) {
+                        endIndex = j + 1;
+                        indices.push_back({ startIndex, endIndex });
+                        numbers.push_back(stoi(line.substr(startIndex, endIndex - startIndex)));
+                        finished = true;
+                        i = j;
+                        break;
+                    }
+                }
+            }
+            finished = false;
+        }
+    }
+
+    return { numbers, indices };
 }
 
 
