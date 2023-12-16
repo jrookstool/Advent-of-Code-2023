@@ -17,6 +17,8 @@ int processFile(string filename);
 int findSum(string beforeLine, string currentLine, string afterLine);
 bool isSpecialCharacter(char c);
 int findSumOfRatios(string beforeLine, string currentLine, string afterLine);
+vector<Number> findNumbers(string line);
+vector<Number> pruneRedundancy(vector<Number> numbers);
 
 
 bool isSpecialCharacter(char c) {
@@ -39,16 +41,29 @@ int processFile(string filename) {
     }
     else cout << "Unable to open file";
 
+    // for (int i = 0; i < lines.size(); i++) {
+    //     printf("Processing line %d: ", i + 1);
+    //     if (i == 0) {
+    //         sum += findSum("", lines[i], lines[i + 1]);
+    //     }
+    //     else if (i == lines.size() - 1) {
+    //         sum += findSum(lines[i - 1], lines[i], "");
+    //     }
+    //     else {
+    //         sum += findSum(lines[i - 1], lines[i], lines[i + 1]);
+    //     }
+    // }
+
     for (int i = 0; i < lines.size(); i++) {
         printf("Processing line %d: ", i + 1);
         if (i == 0) {
-            sum += findSum("", lines[i], lines[i + 1]);
+            sum += findSumOfRatios("", lines[i], lines[i + 1]);
         }
         else if (i == lines.size() - 1) {
-            sum += findSum(lines[i - 1], lines[i], "");
+            sum += findSumOfRatios(lines[i - 1], lines[i], "");
         }
         else {
-            sum += findSum(lines[i - 1], lines[i], lines[i + 1]);
+            sum += findSumOfRatios(lines[i - 1], lines[i], lines[i + 1]);
         }
     }
     return sum;
@@ -171,42 +186,171 @@ int findSum(string beforeLine, string currentLine, string afterLine) {
 }
 
 int findSumOfRatios(string beforeLine, string currentLine, string afterLine) {
-    int startIndex = 0;
-    int endIndex = currentLine.length();
-
     int sum = 0;
+    
+    vector<Number> numbersBefore = findNumbers(beforeLine);\
+    vector<Number> numbersCurrent = findNumbers(currentLine);
+    vector<Number> numbersAfter = findNumbers(afterLine);
 
-    vector<array<int, 2>> indices;
-    vector<int> numbers;
-    bool finished = false;
+    for (int i = 0; i < currentLine.size(); i++) {
+        if (currentLine[i] == '*') {
+            // We need to see if there are exactly two numbers in the proximity.
+            // If there are, we need to find the product of those numbers.
 
-    for (int i = 0; i < currentLine.length(); i++) {
-        if (isdigit(currentLine[i])) {
-            startIndex = i;
-            if (!finished) {
-                for (int j = i + 1; j < currentLine.length(); j++) {
-                    if (!isdigit(currentLine[j])) {
-                        endIndex = j;
-                        indices.push_back({ startIndex, endIndex });
-                        numbers.push_back(stoi(currentLine.substr(startIndex, endIndex - startIndex)));
-                        finished = true;
-                        i = j;
-                        break;
+            int numberCount = 0;
+            vector<Number> numbersFound;
+
+            // Check numbers before:
+            if (beforeLine != "") {
+                if (i == 0) {
+                    if (isdigit(beforeLine[i])) {
+                        numberCount++;
+                        // Find the number and add it to the vector.
+                        for (const auto& number : numbersBefore) {
+                            if (number.indices[0] <= i && number.indices[1] >= i) {
+                                numbersFound.push_back(number);
+                                break;
+                            }
+                        }
                     }
-                    if (j == currentLine.length() - 1) {
-                        endIndex = j + 1;
-                        indices.push_back({ startIndex, endIndex });
-                        numbers.push_back(stoi(currentLine.substr(startIndex, endIndex - startIndex)));
-                        finished = true;
-                        i = j;
+                } else if (i == currentLine.length() - 1) {
+                    if (isdigit(afterLine[i])) {
+                        numberCount++;
+                        // Find the number and add it to the vector.
+                        for (const auto& number : numbersAfter) {
+                            if (number.indices[0] <= i && number.indices[1] >= i) {
+                                numbersFound.push_back(number);
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    if (isdigit(beforeLine[i - 1])) {
+                        numberCount++;
+                        // Find the number and add it to the vector.
+                        for (const auto& number : numbersBefore) {
+                            if (number.indices[0] <= i - 1 && number.indices[1] >= i - 1) {
+                                numbersFound.push_back(number);
+                                break;
+                            }
+                        }
+                    }
+                    if (isdigit(beforeLine[i])) {
+                        numberCount++;
+                        // Find the number and add it to the vector.
+                        for (const auto& number : numbersBefore) {
+                            if (number.indices[0] <= i && number.indices[1] >= i) {
+                                numbersFound.push_back(number);
+                                break;
+                            }
+                        }
+                    }
+                    if (isdigit(beforeLine[i + 1])) {
+                        numberCount++;
+                        // Find the number and add it to the vector.
+                        for (const auto& number : numbersBefore) {
+                            if (number.indices[0] <= i + 1 && number.indices[1] >= i + 1) {
+                                numbersFound.push_back(number);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+
+            // Now check same line
+
+            if (isdigit(currentLine[i - 1])) {
+                numberCount++;
+                // Find the number and add it to the vector.
+                for (const auto& number : numbersCurrent) {
+                    if (number.indices[0] <= i - 1 && number.indices[1] >= i - 1) {
+                        numbersFound.push_back(number);
                         break;
                     }
                 }
             }
-            finished = false;
+            if (isdigit(currentLine[i + 1])) {
+                numberCount++;
+                // Find the number and add it to the vector.
+                for (const auto& number : numbersCurrent) {
+                    if (number.indices[0] <= i + 1 && number.indices[1] >= i + 1) {
+                        numbersFound.push_back(number);
+                        break;
+                    }
+                }
+            }
+
+            // Now check numbers after:
+
+            if (afterLine != "") {
+                if (i == 0) {
+                    if (isdigit(beforeLine[i])) {
+                        numberCount++;
+                        // Find the number and add it to the vector.
+                        for (const auto& number : numbersBefore) {
+                            if (number.indices[0] <= i && number.indices[1] >= i) {
+                                numbersFound.push_back(number);
+                                break;
+                            }
+                        }
+                    }
+                }else if (i == currentLine.length() - 1) {
+                    if (isdigit(afterLine[i])) {
+                        numberCount++;
+                        // Find the number and add it to the vector.
+                        for (const auto& number : numbersAfter) {
+                            if (number.indices[0] <= i && number.indices[1] >= i) {
+                                numbersFound.push_back(number);
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    if (isdigit(afterLine[i - 1])) {
+                        numberCount++;
+                        // Find the number and add it to the vector.
+                        for (const auto& number : numbersAfter) {
+                            if (number.indices[0] <= i - 1 && number.indices[1] >= i - 1) {
+                                numbersFound.push_back(number);
+                                break;
+                            }
+                        }
+                    }
+                    if (isdigit(afterLine[i])) {
+                        numberCount++;
+                        // Find the number and add it to the vector.
+                        for (const auto& number : numbersAfter) {
+                            if (number.indices[0] <= i && number.indices[1] >= i) {
+                                numbersFound.push_back(number);
+                                break;
+                            }
+                        }
+                    }
+                    if (isdigit(afterLine[i + 1])) {
+                        numberCount++;
+                        // Find the number and add it to the vector.
+                        for (const auto& number : numbersAfter) {
+                            if (number.indices[0] <= i + 1 && number.indices[1] >= i + 1) {
+                                numbersFound.push_back(number);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Now we need to prune redundancies from the set, due to double counting.
+            numbersFound = pruneRedundancy(numbersFound);
+
+            if (numbersFound.size() == 2) {
+                sum += numbersFound[0].value * numbersFound[1].value;
+            }
         }
     }
 
+    return sum;
 }
 
 vector<Number> findNumbers(string line) {
@@ -224,7 +368,6 @@ vector<Number> findNumbers(string line) {
                 for (int j = i + 1; j < line.length(); j++) {
                     if (!isdigit(line[j])) {
                         endIndex = j;
-                        indices.push_back({ startIndex, endIndex });
                         numbers.push_back({stoi(line.substr(startIndex, endIndex - startIndex)), { startIndex, endIndex }});
                         finished = true;
                         i = j;
@@ -232,8 +375,7 @@ vector<Number> findNumbers(string line) {
                     }
                     if (j == line.length() - 1) {
                         endIndex = j + 1;
-                        indices.push_back({ startIndex, endIndex });
-                        numbers.push_back(stoi(line.substr(startIndex, endIndex - startIndex)));
+                        numbers.push_back({stoi(line.substr(startIndex, endIndex - startIndex)), { startIndex, endIndex }});
                         finished = true;
                         i = j;
                         break;
@@ -244,21 +386,41 @@ vector<Number> findNumbers(string line) {
         }
     }
 
-    return { numbers, indices };
+    for (const auto& number : numbers) {
+
+        cout << "[" << number.value << "] ";
+    }
+    cout << endl;
+
+    return numbers;
+}
+
+vector<Number> pruneRedundancy(vector<Number> numbers) {
+    vector<Number> prunedNumbers;
+
+    for (int i = 0; i < numbers.size(); i++) {
+        bool found = false;
+        for (int j = 0; j < prunedNumbers.size(); j++) {
+            if (numbers[i].value == prunedNumbers[j].value && numbers[i].indices[0] == prunedNumbers[j].indices[0] && numbers[i].indices[1] == prunedNumbers[j].indices[1]) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            prunedNumbers.push_back(numbers[i]);
+        }
+    }
+
+    return prunedNumbers;
 }
 
 
 int main() {
-    // tried 413539, too low
-    // tried 477459, too low
-    // tried 489961, too low
-    // tried 527354, incorrect
-    // tried 529504, incorrect
-
+    // Tried 35868012, too low.
+    
     cout << processFile("day3_input.txt") << endl;
 
+    //cout << processFile("sample.txt") << endl;
+
     //cout << findSum("*.........", "..611..211", ".........*") << endl;
-    //*........
-    //..611..211
-    //.........*
 }
